@@ -15,8 +15,18 @@ const questionInput = z.object({ id: z.number().optional(), label: z.string().mi
 const formInput = z.object({ title: z.string().min(1).max(200), slug: z.string().regex(/^[a-z0-9-]+$/).min(2).max(120), description: z.string().max(5000).optional(), status: z.enum(["draft", "open", "closed"]), successMessage: z.string().max(500).optional(), questions: z.array(questionInput) });
 const recentSubmissions = new Map<string, number>();
 function enforceSubmissionGuard(req: { headers: Record<string, unknown> }) {
-  const origin = String(req.headers.origin ?? ""); const host = String(req.headers.host ?? "");
-  if (origin && host) { try { if (new URL(origin).host !== host) throw new TRPCError({ code: "FORBIDDEN", message: "安全確認に失敗しました。" }); } catch (error) { if (error instanceof TRPCError) throw error; throw new TRPCError({ code: "FORBIDDEN", message: "安全確認に失敗しました。" }); } }
+  const origin = String(req.headers.origin ?? "");
+  const requestHosts = [String(req.headers.host ?? ""), String(req.headers["x-forwarded-host"] ?? "")].filter(Boolean);
+  const trustedHosts = new Set(["entryform-4xosiknu.manus.space", "3000-ivl9p3nn8yuztdssasdqa-c1648c1a.us3.manus.computer", ...requestHosts]);
+  if (origin) {
+    try {
+      const originUrl = new URL(origin);
+      if (originUrl.protocol !== "https:" || !trustedHosts.has(originUrl.host)) throw new TRPCError({ code: "FORBIDDEN", message: "安全確認に失敗しました。" });
+    } catch (error) {
+      if (error instanceof TRPCError) throw error;
+      throw new TRPCError({ code: "FORBIDDEN", message: "安全確認に失敗しました。" });
+    }
+  }
   const key = String(req.headers["x-forwarded-for"] ?? req.headers["user-agent"] ?? "anonymous"); const now = Date.now(); const previous = recentSubmissions.get(key) ?? 0;
   if (now - previous < 10000) throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: "短時間に送信が集中しています。少し待ってからお試しください。" });
   recentSubmissions.set(key, now); if (recentSubmissions.size > 5000) recentSubmissions.clear();
