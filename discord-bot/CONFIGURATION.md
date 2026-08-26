@@ -6,7 +6,7 @@ VPS上の`discord-bot`ディレクトリに、次の環境変数を設定して�
 export DISCORD_BOT_TOKEN='Discord Developer Portalで発行したBot Token'
 export FORM_API_SECRET='十分に長いランダム文字列'
 export PORT='8787'
-export DATA_FILE='./data/channel-codes.json'
+export DATA_DIR='./data'
 export PUBLIC_FORM_ORIGIN='https://laki20110309-sketch.github.io'
 ```
 

@@ -29,7 +29,7 @@ sudo nano /etc/entry-atelier/bot.env
 DISCORD_BOT_TOKEN=ここにBot Token
 FORM_API_SECRET=十分に長いランダム文字列
 PORT=8787
-DATA_FILE=/opt/entry-atelier/discord-bot/data/channel-codes.json
+DATA_DIR=/opt/entry-atelier/discord-bot/data
 ```
 
 起動は次の通りです。
@@ -41,7 +41,19 @@ sudo systemctl status entry-atelier-bot
 curl http://127.0.0.1:8787/health
 ```
 
-本番ではAPIポートを直接公開せず、NginxまたはCaddyでHTTPSのドメインを割り当て、`/notify`だけを外部公開してください。フォーム側からは`https://あなたのドメイン/notify`へPOSTします。Bot Tokenと`FORM_API_SECRET`をGitHubへコミットしてはいけません。
+本番ではAPIポート`8787`を直接公開せず、同梱の`nginx/entry-atelier.conf`をNginxへ配置し、ドメインを設定してHTTPS化してください。`certbot`等で証明書を発行した後、フォーム側の`config.js`には`https://あなたのドメイン/public-notify`を設定します。ファイアウォールはSSH・HTTP・HTTPSだけを許可し、APIポートは閉じます。
+
+```bash
+sudo apt install -y nginx certbot python3-certbot-nginx ufw
+sudo ufw allow OpenSSH
+sudo ufw allow 80/tcp
+sudo ufw allow 443/tcp
+sudo ufw --force enable
+# DNSでドメインを161.34.35.218へ向けた後
+sudo certbot --nginx -d entry-api.example.com
+```
+
+Bot Tokenと`FORM_API_SECRET`をGitHubへコミットしてはいけません。
 
 ## 識別コードの例
 
