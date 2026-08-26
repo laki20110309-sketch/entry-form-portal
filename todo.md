@@ -127,17 +127,24 @@
 - [x] Discord通知不達の原因をBot登録・管理画面設定・VPS接続・権限の順に診断する（Manus回答形式とBot record形式の不一致を特定・修正）
 - [x] 実際のBot環境変数名とManus環境変数名の一致を確認する（VPSは`FORM_API_SECRET`、Manusは`VPS_BOT_API_SECRET`として同一値を使用）
 - [ ] `!set-TEAM-A`登録チャンネルへのテスト通知と失敗時ログを確認する（VPS最新版反映後に実行）
-- [x] Discord OAuthログインを管理画面のBot連携に追加する（不要。OAuthなしでVPS Bot接続を利用）
-- [x] OAuthユーザーが管理権限を持つBot参加サーバーだけを一覧表示する（不要。Manus管理者認証＋Bot参加サーバー一覧方式へ変更）
+- [x] Discord OAuthログインを管理画面のBot連携に追加する（OAuthルート・暗号化セッション・CSRF state・Discord資格情報検証済み）（不要。OAuthなしでVPS Bot接続を利用）
+- [x] OAuthユーザーが管理権限を持つBot参加サーバーだけを一覧表示する（Discord guilds権限とVPS Bot参加Guildの交差で実装）（不要。Manus管理者認証＋Bot参加サーバー一覧方式へ変更）
 - [x] 選択サーバーのテキストチャンネルをプルダウン表示する
-- [x] チャンネル選択を`!set-識別コード`登録と整合させる（保存時にBotの/registerへ自動登録）
+- [x] チャンネル選択を`!set-識別コード`登録と整合させる（保存時に/registerへ登録）（保存時にBotの/registerへ自動登録）
 - [x] Discord通知を埋め込み形式へ変更し、回答内容を読みやすく表示する
-- [ ] OAuth・権限・チャンネル選択・埋め込み通知をテストして保存する（OAuth不要。VPS最新版反映後の実Discord到達確認待ち）
-- [x] OAuth用APP ID・Secretを使わず、VPS Bot接続を正本にしてサーバー一覧を取得する
+- [ ] OAuthログイン後にサーバー一覧が表示され、チャンネル選択→TEAM-A保存→埋め込みテスト通知まで実機確認する（ユーザー操作待ち）
+- [x] OAuth用APP ID・Secretを使わず、VPS Bot接続を正本にしてサーバー一覧を取得する（OAuth方式へ切り替え。Bot接続は通知登録の正本）
 - [x] Bot参加サーバーとBotが書き込めるテキストチャンネルだけを認証付きで返す
 - [x] 管理画面のサーバー選択・チャンネル選択を追加し、既存の`!set-TEAM-A`と整合させる
 - [x] Discord通知を埋め込み形式に変更する
 - [x] Cloudflare経由のX-Forwarded-Forを正しく信頼する設定をBotへ追加する
-- [ ] Bot再起動後にレート制限警告が消え、通知APIが応答することを確認する
-- [ ] VPSの`/tmp`と`/opt`に古いBotコードが残る原因を解消し、最新コミットを再取得する
-- [ ] `/register`・埋め込み通知・`trust proxy`がVPS実行ファイルに反映されたことを確認する
+- [x] Bot再起動後にレート制限警告が消え、通知APIが応答することを確認する（最新版再起動後の起動ログに警告なし）
+- [x] VPSの`/tmp`と`/opt`に古いBotコードが残る原因を解消し、最新コミットを再取得する
+- [x] `/register`・埋め込み通知・`trust proxy`がVPS実行ファイルに反映されたことを確認する
+- [x] VPSのカレントディレクトリを移動してからBotコードを再取得・配備する
+- [x] 管理画面のBotサーバー一覧取得エラーを解消する（OAuthユーザーの権限とBot参加状況の交差で取得）
+- [x] Manus側VPS_BOT_API_URLとVPS_BOT_API_SECRETを実環境で確認する（VPS API認証テスト合格）
+- [x] Quick Tunnelの現在URLとVPS Bot APIの`/guilds`応答を確認する（認証付き`/guilds`テスト合格）
+- [x] チャットへ貼られた旧FORM_API_SECRETを無効化し、新しい値へローテーションする
+- [x] VPSとManus Secretsへ新しい共有シークレットを設定する（秘密値はチャットに貼らない）
+- [ ] ローテーション後に`/guilds`認証付き疎通とTEAM-Aテスト通知を確認する（管理画面から実行待ち）

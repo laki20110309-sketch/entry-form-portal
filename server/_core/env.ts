@@ -9,4 +9,7 @@ export const ENV = {
   forgeApiKey: process.env.BUILT_IN_FORGE_API_KEY ?? "",
   vpsBotApiUrl: process.env.VPS_BOT_API_URL ?? "",
   vpsBotApiSecret: process.env.VPS_BOT_API_SECRET ?? "",
+  discordClientId: process.env.DISCORD_CLIENT_ID ?? "",
+  discordClientSecret: process.env.DISCORD_CLIENT_SECRET ?? "",
+  discordRedirectUri: process.env.DISCORD_REDIRECT_URI ?? "https://entryform-4xosiknu.manus.space/api/discord/callback",
 };
