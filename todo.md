@@ -106,3 +106,10 @@
 - [x] GitHub PagesからVPSへの直接送信を無効化し、本番送信をManus公開フォームのサーバー中継へ切り替える
 - [x] TEAM-Aをサーバー側の通知識別コードとして維持し、公開側へ秘密情報を露出しない
 - [x] Google検証・公開ソース確認で内部設定が表示されないことを検証する（公開ソースgrep・公開トップ画面確認済み。Googleの外部キャッシュ反映は時間差あり）
+- [x] GitHub Pagesの右上導線を公開HTMLから除去し、公開トップを確認する
+- [x] GitHub Pagesからapp.js・config.js・APIキー・送信先URLを公開配信しない構成へ移行する
+- [x] 公開フォームの送信先をManusサーバー側のDB保存・Bot通知へ統一する
+- [x] Google検証で公開ソースとネットワークに秘密情報・内部URLがないことを確認する（Pages artifactをindex.html/styles.cssだけに限定）
+- [x] リポジトリ直下のindex.htmlからログイン・管理画面ボタンと管理DOMを除去する
+- [x] リポジトリ直下の公開app.js・config.js参照と旧管理ロジックを除去する
+- [x] GitHub Pages実公開元が直下であることを前提に公開画面を再確認する

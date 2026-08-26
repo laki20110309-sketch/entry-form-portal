@@ -25,10 +25,16 @@ jobs:
         uses: actions/checkout@v4
       - name: Configure Pages
         uses: actions/configure-pages@v5
+      - name: Prepare public artifact
+        run: |
+          rm -rf .pages-dist
+          mkdir -p .pages-dist
+          cp index.html styles.css .pages-dist/
+          touch .pages-dist/.nojekyll
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: .
+          path: .pages-dist
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
