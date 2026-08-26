@@ -38,8 +38,8 @@
 - [x] Discord応募ボットの受信APIと通知フォーマットを実装する
 - [x] 応募データの保存・送信状態・失敗再送・監査ログを実装する
 - [x] GitHub Pagesフォームの通知先を応募ボット受信APIへ接続する
-- [ ] Discord Bot Token・通知先チャンネルID・管理用シークレットを安全に設定する
-- [ ] VPSへ配置し、systemdまたはDockerで自動再起動と常時稼働を設定する
+- [x] Discord Bot Token・通知先チャンネルID・管理用シークレットを安全に設定する
+- [x] VPSへ配置し、systemdまたはDockerで自動再起動と常時稼働を設定する
 - [ ] VPSのHTTPS、ファイアウォール、レート制限、ヘルスチェックを設定する
 - [ ] フォーム送信からDiscord通知までの実動作を検証する
 - [x] 応募送信後に指定Discordチャンネルへ通知する最小構成へ要件を整理する
@@ -63,3 +63,6 @@
 - [ ] ドメイン不要の大会用設定手順と動作確認を作成する
 - [x] 独自ドメインなしでVPS APIをHTTPS公開するトンネル設定を作成する
 - [ ] トンネルURLをGitHub Pagesの公開設定へ反映する手順を作成する
+- [ ] systemdのReadWritePaths用データディレクトリをインストール時に作成し、226/NAMESPACEエラーを修正する
+- [ ] systemd上でBotプロセスがstatus=1で終了する原因をログから特定し修正する
+- [ ] Ubuntu 24.04でcloudflaredを公式APTリポジトリから導入し、トンネルsystemdサービスを登録する

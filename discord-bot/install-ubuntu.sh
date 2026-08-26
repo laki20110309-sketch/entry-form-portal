@@ -6,7 +6,7 @@ ENV_DIR=/etc/entry-atelier
 sudo apt-get update
 sudo apt-get install -y nodejs npm
 sudo useradd --system --home /opt/entry-atelier --shell /usr/sbin/nologin entryatelier 2>/dev/null || true
-sudo mkdir -p "$APP_DIR" "$ENV_DIR"
+sudo mkdir -p "$APP_DIR/data" "$ENV_DIR"
 sudo cp -R ./* "$APP_DIR/"
 sudo chown -R entryatelier:entryatelier /opt/entry-atelier
 sudo -u entryatelier npm --prefix "$APP_DIR" install --omit=dev
@@ -16,6 +16,7 @@ if [ ! -f "$ENV_DIR/bot.env" ]; then
 DISCORD_BOT_TOKEN=
 FORM_API_SECRET=
 PORT=8787
+PUBLIC_FORM_ORIGIN=https://laki20110309-sketch.github.io
 DATA_DIR=/opt/entry-atelier/discord-bot/data
 EOF
   sudo chmod 600 "$ENV_DIR/bot.env"
