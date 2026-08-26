@@ -21,14 +21,20 @@ function enforceSubmissionGuard(req: { headers: Record<string, unknown> }) {
   recentSubmissions.set(key, now); if (recentSubmissions.size > 5000) recentSubmissions.clear();
 }
 
+async function botFetch(path: string, init: RequestInit = {}) {
+  const endpoint = ENV.vpsBotApiUrl;
+  if (!endpoint || !ENV.vpsBotApiSecret) throw new Error("Bot endpoint is not configured");
+  const url = new URL(path, endpoint).toString();
+  const headers = new Headers(init.headers); headers.set("authorization", `Bearer ${ENV.vpsBotApiSecret}`); headers.set("content-type", "application/json");
+  const response = await fetch(url, { ...init, headers, signal: AbortSignal.timeout(8000) });
+  if (!response.ok) throw new Error(`Bot endpoint returned ${response.status}`);
+  return response.json() as Promise<any>;
+}
+
 async function notifyBot(formId: number, payload: unknown) {
   const integration = await getIntegration(formId);
   if (!integration || !integration.enabled) return { sent: false };
-  const endpoint = ENV.vpsBotApiUrl;
-  if (!endpoint || !ENV.vpsBotApiSecret) throw new Error("Bot endpoint is not configured");
-  const headers: Record<string, string> = { "content-type": "application/json", authorization: `Bearer ${ENV.vpsBotApiSecret}` };
-  const response = await fetch(endpoint, { method: "POST", headers, body: JSON.stringify({ code: integration.notificationCode, formTitle: (payload as { formTitle?: string }).formTitle ?? "応募フォーム", answers: (payload as { answers?: unknown }).answers ?? {}, submittedAt: new Date().toISOString(), channel: integration.channelName, formId }), signal: AbortSignal.timeout(8000) });
-  if (!response.ok) throw new Error(`Bot endpoint returned ${response.status}`);
+  await botFetch("/notify", { method: "POST", body: JSON.stringify({ code: integration.notificationCode, formTitle: (payload as { formTitle?: string }).formTitle ?? "応募フォーム", answers: (payload as { answers?: unknown }).answers ?? {}, submittedAt: new Date().toISOString(), channel: integration.channelName, formId }) });
   return { sent: true };
 }
 
@@ -72,7 +78,9 @@ export const appRouter = router({
     cloneForm: adminProcedure.input(z.object({ id: z.number() })).mutation(async ({ input, ctx }) => { const db = await getDb(); const source = await getFormById(input.id); if (!db || !source) throw new TRPCError({ code: "NOT_FOUND" }); const slug = `${source.slug}-copy-${Date.now().toString().slice(-5)}`; const created = await db.insert(forms).values({ title: `${source.title}（複製）`, slug, description: source.description, status: "draft", successMessage: source.successMessage, createdBy: ctx.user.id }); const formId = Number(created[0].insertId); const qs = await getQuestions(input.id); if (qs.length) await db.insert(questions).values(qs.map(q => ({ formId, label: q.label, description: q.description, type: q.type, options: q.options, required: q.required, position: q.position }))); return { id: formId }; }),
     submissions: adminProcedure.input(z.object({ formId: z.number().optional() }).optional()).query(({ input }) => listSubmissions(input?.formId)),
     submission: adminProcedure.input(z.object({ id: z.number() })).query(({ input }) => getSubmission(input.id)),
-    saveIntegration: adminProcedure.input(z.object({ formId: z.number(), channelName: z.string().min(1).max(200), notificationCode: z.string().regex(/^[A-Za-z0-9_-]{3,32}$/), enabled: z.boolean() })).mutation(async ({ input }) => { const db = await getDb(); if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" }); if (!ENV.vpsBotApiUrl || !ENV.vpsBotApiSecret) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "サーバー側のBot API設定が未完了です。" }); const current = await getIntegration(input.formId); const values = { formId: input.formId, channelName: input.channelName, notificationCode: input.notificationCode.toUpperCase(), endpointUrl: ENV.vpsBotApiUrl, enabled: input.enabled ? 1 : 0 }; if (current) await db.update(integrations).set(values).where(eq(integrations.formId, input.formId)); else await db.insert(integrations).values(values); return { success: true }; }),
+    discordGuilds: adminProcedure.query(async () => { const result = await botFetch("/guilds"); return result.guilds as Array<{ id: string; name: string }>; }),
+    discordChannels: adminProcedure.input(z.object({ guildId: z.string().regex(/^\d{15,25}$/) })).query(async ({ input }) => { const result = await botFetch(`/guilds/${input.guildId}/channels`); return result.channels as Array<{ id: string; name: string; type: number }>; }),
+    saveIntegration: adminProcedure.input(z.object({ formId: z.number(), guildId: z.string().regex(/^\d{15,25}$/).optional(), channelId: z.string().regex(/^\d{15,25}$/).optional(), channelName: z.string().min(1).max(200), notificationCode: z.string().regex(/^[A-Za-z0-9_-]{3,32}$/), enabled: z.boolean() })).mutation(async ({ input }) => { const db = await getDb(); if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" }); if (!ENV.vpsBotApiUrl || !ENV.vpsBotApiSecret) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "サーバー側のBot API設定が未完了です。" }); const current = await getIntegration(input.formId); const normalizedCode = input.notificationCode.toUpperCase(); if (input.guildId && input.channelId) await botFetch("/register", { method: "POST", body: JSON.stringify({ guildId: input.guildId, channelId: input.channelId, code: normalizedCode }) }); const values = { formId: input.formId, guildId: input.guildId ?? null, channelId: input.channelId ?? null, channelName: input.channelName, notificationCode: normalizedCode, endpointUrl: ENV.vpsBotApiUrl, enabled: input.enabled ? 1 : 0 }; if (current) await db.update(integrations).set(values).where(eq(integrations.formId, input.formId)); else await db.insert(integrations).values(values); return { success: true }; }),
     testIntegration: adminProcedure.input(z.object({ formId: z.number() })).mutation(async ({ input }) => { const result = await notifyBot(input.formId, { formTitle: "接続テスト", answers: { "テスト": "このメッセージが届けばDiscord連携は成功です。" } }); if (!result.sent) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "連携が有効になっていません。" }); return { success: true }; }),
   }),
 });

@@ -17,6 +17,7 @@ const submissionsFile = path.join(dataDir, 'submissions.json');
 if (!token || !apiSecret) throw new Error('DISCORD_BOT_TOKEN and FORM_API_SECRET are required');
 
 const app = express();
+app.set('trust proxy', 1);
 app.disable('x-powered-by');
 app.use(helmet());
 app.use(express.json({ limit: '64kb' }));
@@ -48,20 +49,23 @@ function safeEqual(a, b) { const left = Buffer.from(a); const right = Buffer.fro
 function authorized(req) { const value = String(req.headers.authorization || ''); return value.startsWith('Bearer ') && safeEqual(value.slice(7), apiSecret); }
 function normalizeCode(value) { return String(value || '').trim().toUpperCase(); }
 function formatAnswer(value) { return Array.isArray(value) ? value.join(', ') : value || '未回答'; }
-function chunks(text, size = 1800) { const result = []; for (let i = 0; i < text.length; i += size) result.push(text.slice(i, i + size)); return result; }
-function formatNotification(submission) {
-  const lines = Object.entries(submission.answers).map(([question, value]) => `**${question}**\n${formatAnswer(value)}`);
-  return [`## 新しい応募`, `**フォーム:** ${submission.formTitle}`, `**受付日時:** ${submission.submittedAt || new Date().toISOString()}`, `**受付ID:** ${submission.id}`, '', ...lines].join('\n');
-}
+function embedFields(submission) { return Object.entries(submission.answers).map(([question, value]) => ({ name: question.slice(0, 256), value: formatAnswer(value).slice(0, 1024) || '未回答', inline: false })); }
 async function deliver(submission) {
   const channelId = channelCodes[normalizeCode(submission.code)];
   if (!channelId) throw new Error('unknown_code');
   const channel = await client.channels.fetch(channelId);
   if (!channel?.isTextBased()) throw new Error('target_channel_not_text');
-  for (const piece of chunks(formatNotification(submission))) await channel.send(piece);
+  const fields = embedFields(submission);
+  for (let i = 0; i < Math.max(1, fields.length); i += 25) {
+    const page = fields.slice(i, i + 25);
+    await channel.send({ embeds: [{ title: i ? `新しい応募（続き ${Math.floor(i / 25) + 1}）` : '新しい応募', color: 0xA57B36, description: i === 0 ? `フォーム: ${submission.formTitle}` : undefined, fields: page, footer: i === 0 ? { text: `受付ID: ${submission.id}` } : undefined, timestamp: submission.submittedAt || new Date().toISOString() }] });
+  }
 }
 
 app.get('/health', (_req, res) => res.json({ ok: true, botReady: client.isReady(), registeredCodes: Object.keys(channelCodes).length, pending: submissions.filter(item => item.status === 'failed').length }));
+app.get('/guilds', (req, res) => { if (!authorized(req)) return res.status(401).json({ error: 'unauthorized' }); return res.json({ guilds: [...client.guilds.cache.values()].map(guild => ({ id: guild.id, name: guild.name })).sort((a, b) => a.name.localeCompare(b.name, 'ja')) }); });
+app.get('/guilds/:guildId/channels', (req, res) => { if (!authorized(req)) return res.status(401).json({ error: 'unauthorized' }); const guild = client.guilds.cache.get(req.params.guildId); if (!guild) return res.status(404).json({ error: 'guild_not_found' }); const me = guild.members.me; const channels = [...guild.channels.cache.values()].filter(channel => channel.isTextBased() && !channel.isThread() && me?.permissionsIn(channel).has(PermissionFlagsBits.ViewChannel) && me.permissionsIn(channel).has(PermissionFlagsBits.SendMessages)).map(channel => ({ id: channel.id, name: channel.name, type: channel.type })).sort((a, b) => a.name.localeCompare(b.name, 'ja')); return res.json({ guildId: guild.id, channels }); });
+app.post('/register', async (req, res) => { if (!authorized(req)) return res.status(401).json({ error: 'unauthorized' }); const parsed = z.object({ guildId: z.string().regex(/^\d{15,25}$/), channelId: z.string().regex(/^\d{15,25}$/), code: codeSchema }).safeParse(req.body); if (!parsed.success) return res.status(400).json({ error: 'invalid_payload' }); const guild = client.guilds.cache.get(parsed.data.guildId); const channel = guild?.channels.cache.get(parsed.data.channelId); const me = guild?.members.me; if (!guild || !channel) return res.status(404).json({ error: 'channel_not_found' }); if (!channel.isTextBased() || channel.isThread() || !me?.permissionsIn(channel).has(PermissionFlagsBits.ViewChannel) || !me.permissionsIn(channel).has(PermissionFlagsBits.SendMessages)) return res.status(403).json({ error: 'channel_not_writable' }); channelCodes[normalizeCode(parsed.data.code)] = channel.id; await saveCodes(); return res.json({ ok: true, code: normalizeCode(parsed.data.code), guildId: guild.id, channelId: channel.id, channelName: channel.name }); });
 app.post('/notify', async (req, res) => {
   if (!authorized(req)) return res.status(401).json({ error: 'unauthorized' });
   const parsed = notificationSchema.safeParse(req.body);

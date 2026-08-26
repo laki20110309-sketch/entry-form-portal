@@ -56,6 +56,8 @@ export const answers = mysqlTable("answers", {
 export const integrations = mysqlTable("integrations", {
   id: int("id").autoincrement().primaryKey(),
   formId: int("formId").notNull().unique(),
+  guildId: varchar("guildId", { length: 32 }),
+  channelId: varchar("channelId", { length: 32 }),
   channelName: varchar("channelName", { length: 200 }).notNull(),
   notificationCode: varchar("notificationCode", { length: 64 }).notNull().default(""),
   endpointUrl: varchar("endpointUrl", { length: 500 }).notNull(),
