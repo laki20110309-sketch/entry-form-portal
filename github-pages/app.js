@@ -1,5 +1,5 @@
 const API_ENDPOINT = window.ENTRY_API_ENDPOINT || '';
-const seed = { id: 1, title: 'エントリーフォーム', slug: 'entry', description: '必要事項をご入力ください。', status: 'open', successMessage: '回答を受け付けました。ありがとうございました。', notificationCode: 'TEAM-A', questions: [
+const seed = { id: 1, title: 'エントリーフォーム', slug: 'entry', description: '必要事項をご入力ください。', status: 'open', successMessage: '回答を受け付けました。ありがとうございました。', questions: [
   { id: 1, label: 'お名前', description: '', type: 'short_text', required: true, options: [] },
   { id: 2, label: 'メールアドレス', description: 'ご連絡可能なアドレスをご入力ください。', type: 'email', required: true, options: [] },
   { id: 3, label: 'お問い合わせ内容', description: '', type: 'long_text', required: true, options: [] }
@@ -44,8 +44,9 @@ async function submitPublic(event) {
   });
   const submittedAt = new Date().toISOString();
   try {
+    if (!API_ENDPOINT) throw new Error('server_only');
     if (API_ENDPOINT) {
-      const response = await fetch(API_ENDPOINT, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code: form.notificationCode || '', formTitle: form.title, answers: Object.fromEntries((form.questions || []).map(question => [question.label, data[question.id]])), submittedAt }) });
+      const response = await fetch(API_ENDPOINT, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ formTitle: form.title, answers: Object.fromEntries((form.questions || []).map(question => [question.label, data[question.id]])), submittedAt }) });
       if (!response.ok) throw new Error('notification_failed');
     }
     event.target.innerHTML = `<div class="empty" style="text-align:center;padding:40px 0"><strong style="font-family:'Playfair Display',serif;font-size:25px;display:block;margin-bottom:10px">ありがとうございます。</strong>${esc(form.successMessage || '回答を受け付けました。')}</div>`;
