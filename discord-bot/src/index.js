@@ -18,6 +18,7 @@ const app = express();
 app.disable('x-powered-by');
 app.use(helmet());
 app.use(express.json({ limit: '64kb' }));
+app.use((req, res, next) => { const origin = String(req.headers.origin || ''); const allowed = process.env.PUBLIC_FORM_ORIGIN; if (origin && allowed && origin !== allowed) return res.status(403).json({ error: 'origin_not_allowed' }); if (origin) res.setHeader('Access-Control-Allow-Origin', origin); res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization'); if (req.method === 'OPTIONS') return res.sendStatus(204); next(); });
 app.use(rateLimit({ windowMs: 60_000, limit: 60, standardHeaders: true, legacyHeaders: false }));
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
 const codeSchema = z.string().regex(/^[A-Za-z0-9_-]{3,32}$/);
@@ -33,8 +34,8 @@ function formatAnswer(value) { return Array.isArray(value) ? value.join(', ') : 
 function chunks(text, size = 1800) { const result = []; for (let i = 0; i < text.length; i += size) result.push(text.slice(i, i + size)); return result; }
 
 app.get('/health', (_req, res) => res.json({ ok: true, botReady: client.isReady(), registeredCodes: Object.keys(channelCodes).length }));
-app.post('/notify', async (req, res) => {
-  if (!authorized(req)) return res.status(401).json({ error: 'unauthorized' });
+app.post(['/notify', '/public-notify'], async (req, res) => {
+  if (req.path === '/notify' && !authorized(req)) return res.status(401).json({ error: 'unauthorized' });
   const parsed = notificationSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: 'invalid_payload' });
   const { code, formTitle, answers, submittedAt } = parsed.data;

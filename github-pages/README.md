@@ -1,6 +1,6 @@
 # Entry Atelier — GitHub Pages版
 
-このフォルダは、GitHub Pagesへそのまま配置できる静的ファイル一式です。`index.html`、`styles.css`、`app.js` の3ファイルだけで、公開フォーム、フォーム作成、質問の追加・削除・上下移動、必須設定、回答履歴表示を動かせます。設定と回答は、APIエンドポイントを設定しない初期状態では利用者のブラウザの`localStorage`へ保存されます。
+このフォルダは、GitHub Pagesへそのまま配置できる静的ファイル一式です。`index.html`、`styles.css`、`config.js`、`app.js` の4ファイルで、公開フォーム、フォーム作成、質問の追加・削除・上下移動、必須設定、回答履歴表示を動かせます。設定と回答は、APIエンドポイントを設定しない初期状態では利用者のブラウザの`localStorage`へ保存されます。
 
 ## GitHub Pagesへの公開
 
@@ -14,7 +14,7 @@ GitHubリポジトリを作成し、このフォルダ内の3ファイルをリ�
 
 ## 回答保存とエントリーボット連携について
 
-GitHub PagesはHTML・CSS・JavaScriptを配信する静的ホスティングなので、秘密鍵を保持するサーバー処理やデータベース処理を実行できません。そのため、実運用では`app.js`の`API_ENDPOINT`に、HTTPSで公開したサーバーAPIのURLを設定してください。API側で入力検証、レート制限、CSRF対策、データベース保存、エントリーボットの認証付きチャンネル通知を行います。
+GitHub PagesはHTML・CSS・JavaScriptを配信する静的ホスティングなので、秘密鍵を保持するサーバー処理やデータベース処理を実行できません。そのため、実運用では`config.js`の`window.ENTRY_API_ENDPOINT`に、HTTPSで公開したVPS APIの`/public-notify` URLを設定してください。API側で入力検証、レート制限、CSRF対策、データベース保存、エントリーボットの認証付きチャンネル通知を行います。
 
 > ボットのトークンや署名鍵を`app.js`へ直接書かないでください。GitHub Pages上のJavaScriptは閲覧者へ公開されるため、秘密情報が漏洩します。
 
