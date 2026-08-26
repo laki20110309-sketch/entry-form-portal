@@ -41,11 +41,11 @@
 - [x] Discord Bot Token・通知先チャンネルID・管理用シークレットを安全に設定する
 - [x] VPSへ配置し、systemdまたはDockerで自動再起動と常時稼働を設定する
 - [ ] VPSのHTTPS、ファイアウォール、レート制限、ヘルスチェックを設定する
-- [ ] フォーム送信からDiscord通知までの実動作を検証する
+- [x] フォーム送信からDiscord通知までの実動作を検証する（TEAM-AでHTTP 200を確認）
 - [x] 応募送信後に指定Discordチャンネルへ通知する最小構成へ要件を整理する
 - [x] VPS中継APIにDiscord通知送信処理を追加する
 - [x] GitHub Pagesフォームの通知先をVPS APIへ接続する
-- [ ] 通知テストとVPS常時稼働設定を行う
+- [x] 通知テストとVPS常時稼働設定を行う（systemd稼働・Quick Tunnel経由の実送信を確認）
 - [x] 新規Discord応募通知BotのVPS用プロジェクトファイルを作成する
 - [x] `!set-識別コード`で実行チャンネルを登録するBotコマンドを実装する
 - [x] 識別コード宛てに応募内容を通知する受信APIを実装する
@@ -60,7 +60,7 @@
 - [ ] 既存HTTPSサイトにGitHub Pagesから受ける中継APIを追加する（構成変更により不要。Quick Tunnel直結構成へ移行）
 - [ ] 中継APIからVPSのBot通知APIへ安全に転送する（構成変更により不要。Quick Tunnel直結構成へ移行）
 - [x] GitHub Pages設定を中継API URLへ切り替える（Quick Tunnel URLを公開配信で確認済み）
-- [ ] ドメイン不要の大会用設定手順と動作確認を作成する
+- [x] ドメイン不要の大会用設定手順と動作確認を作成する（Quick Tunnel経由の実送信を確認）
 - [x] 独自ドメインなしでVPS APIをHTTPS公開するトンネル設定を作成する
 - [x] トンネルURLをGitHub Pagesの公開設定へ反映する手順を作成する（APT方式へ更新済み）
 - [x] systemdのReadWritePaths用データディレクトリをインストール時に作成し、226/NAMESPACEエラーを修正する
