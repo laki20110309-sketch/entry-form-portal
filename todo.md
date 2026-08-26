@@ -55,5 +55,11 @@
 - [x] 管理者がフォームごとの共有URLを発行・コピーできるようにする
 - [x] 共有URLから対象フォームを表示できるようにする
 - [x] 共有URL利用時に管理画面や管理データを表示しないようにする
-- [ ] GitHub Pagesを実際に有効化し、Actionsデプロイ成功と公開URL表示を確認する
+- [x] GitHub Pagesを実際に有効化し、Actionsデプロイ成功と公開URL表示を確認する
 - [x] 共有URL利用時は管理画面ナビと管理DOMを非表示にする専用公開モードを実装・検証する
+- [ ] 既存HTTPSサイトにGitHub Pagesから受ける中継APIを追加する（構成変更により不要。Quick Tunnel直結構成へ移行）
+- [ ] 中継APIからVPSのBot通知APIへ安全に転送する（構成変更により不要。Quick Tunnel直結構成へ移行）
+- [ ] GitHub Pages設定を中継API URLへ切り替える（Quick Tunnel URL取得後に反映）
+- [ ] ドメイン不要の大会用設定手順と動作確認を作成する
+- [x] 独自ドメインなしでVPS APIをHTTPS公開するトンネル設定を作成する
+- [ ] トンネルURLをGitHub Pagesの公開設定へ反映する手順を作成する

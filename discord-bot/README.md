@@ -55,6 +55,20 @@ sudo certbot --nginx -d entry-api.example.com
 
 Bot Tokenと`FORM_API_SECRET`をGitHubへコミットしてはいけません。
 
+## ドメインなしの大会用HTTPSトンネル
+
+独自ドメインを用意しない大会期間中は、Cloudflare Quick Tunnelを使えます。これは一時URLなので、VPSを再起動するとURLが変わる可能性があります。起動後に表示される`https://xxxxx.trycloudflare.com`へ`/public-notify`を付けたURLを、GitHub Pagesの`config.js`へ設定してください。
+
+```bash
+sudo snap install cloudflared
+sudo install -o root -g root -m 0644 /opt/entry-atelier/discord-bot/systemd/entry-atelier-tunnel.service /etc/systemd/system/entry-atelier-tunnel.service
+sudo systemctl daemon-reload
+sudo systemctl enable --now entry-atelier-tunnel
+sudo journalctl -u entry-atelier-tunnel -f
+```
+
+表示されたURLを`config.js`の`window.ENTRY_API_ENDPOINT`に設定し、GitHubへpushします。大会後も継続利用する場合は、固定ドメインまたはCloudflare Tunnelの名前付きトンネルへ切り替えてください。
+
 ## 識別コードの例
 
 通知したいチャンネルで`!set-TEAM-A`を実行し、サイト管理画面のフォーム設定に`TEAM-A`を入力します。以降、そのフォームの応募は設定されたチャンネルへ届きます。同じコードを別チャンネルで再設定すると、送信先がそのチャンネルに更新されます。
