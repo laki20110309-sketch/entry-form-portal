@@ -35,7 +35,7 @@ async function botFetch(path: string, init: RequestInit = {}) {
 async function notifyBot(formId: number, payload: unknown) {
   const integration = await getIntegration(formId);
   if (!integration || !integration.enabled) return { sent: false };
-  await botFetch("/notify", { method: "POST", body: JSON.stringify({ code: integration.notificationCode, formTitle: (payload as { formTitle?: string }).formTitle ?? "応募フォーム", answers: (payload as { answers?: unknown }).answers ?? {}, submittedAt: new Date().toISOString(), channel: integration.channelName, formId }) });
+  await botFetch("/notify", { method: "POST", body: JSON.stringify({ code: integration.notificationCode, formTitle: (payload as { formTitle?: string }).formTitle ?? "応募フォーム", answers: (payload as { answers?: unknown }).answers ?? {}, submittedAt: new Date().toISOString() }) });
   return { sent: true };
 }
 
