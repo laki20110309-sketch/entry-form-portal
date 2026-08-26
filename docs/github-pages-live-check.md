@@ -1,0 +1,1 @@
+2026-08-26: GitHub Pagesの最新実配信をcurlで確認。index.htmlはapp.jsを読み込み、id="app"のローディング領域を含む。app.jsはAPI_ORIGIN、publicForms.get、SUBMITTEDを含む。GitHub Actions run 32990229665はcommit 27e5558eでsuccess。ブラウザ表示はキャッシュまたはJavaScript実行状態の確認が必要。

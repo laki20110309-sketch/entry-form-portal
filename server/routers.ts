@@ -14,10 +14,10 @@ const questionType = z.enum(["short_text", "long_text", "email", "single_choice"
 const questionInput = z.object({ id: z.number().optional(), label: z.string().min(1).max(300), description: z.string().max(2000).optional(), type: questionType, options: z.array(z.string().min(1).max(200)).max(30).default([]), required: z.boolean().default(false), position: z.number().int().min(0) });
 const formInput = z.object({ title: z.string().min(1).max(200), slug: z.string().regex(/^[a-z0-9-]+$/).min(2).max(120), description: z.string().max(5000).optional(), status: z.enum(["draft", "open", "closed"]), successMessage: z.string().max(500).optional(), questions: z.array(questionInput) });
 const recentSubmissions = new Map<string, number>();
-function enforceSubmissionGuard(req: { headers: Record<string, unknown> }) {
+export function enforceSubmissionGuard(req: { headers: Record<string, unknown> }) {
   const origin = String(req.headers.origin ?? "");
   const requestHosts = [String(req.headers.host ?? ""), String(req.headers["x-forwarded-host"] ?? "")].filter(Boolean);
-  const trustedHosts = new Set(["entryform-4xosiknu.manus.space", "3000-ivl9p3nn8yuztdssasdqa-c1648c1a.us3.manus.computer", ...requestHosts]);
+  const trustedHosts = new Set(["entryform-4xosiknu.manus.space", "3000-ivl9p3nn8yuztdssasdqa-c1648c1a.us3.manus.computer", "laki20110309-sketch.github.io", ...requestHosts]);
   if (origin) {
     try {
       const originUrl = new URL(origin);

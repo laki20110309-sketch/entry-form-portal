@@ -165,3 +165,5 @@
 - [x] 公開GitHub PagesフォームからManusの公開APIへ回答を送信する（公開CORSはGitHub Pages originのみ許可）
 - [x] GitHub Pages回答フォームで必須チェックと送信完了表示を実装する
 - [x] 公開フォームから秘密情報を露出させずにManus DB・Discord通知を確認する（公開JSに秘密値なし。DB・通知はManusサーバー側）
+- [x] GitHub PagesのOriginを安全確認の許可リストへ追加する
+- [x] GitHub Pages回答リンクから送信し、DB保存とTEAM-A通知を再確認する
