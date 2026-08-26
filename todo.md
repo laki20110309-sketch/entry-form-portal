@@ -160,7 +160,7 @@
 - [x] 右下「MADE WITH MANUS」の表示元を確認し、削除可否を判断する（Manusホスティング側表示のため直接削除せず、回答URLをGitHub Pagesへ移行）
 - [x] GitHub Pages公開URLの「リンク」表示内容と原因を確認する（トップは案内ページで、フォームは`?form=`専用リンク）
 - [x] 参加者向け回答フォームへの正しい導線を公開トップへ追加する（管理画面の回答リンクをGitHub Pages形式へ変更）
-- [ ] GitHub Pages公開URLを再確認し、誤ったリンク案内を解消する（Pages Actionsの新デプロイ後に実URLで確認）
+- [x] GitHub Pages公開URLを再確認し、誤ったリンク案内を解消する（Pages Actionsの新デプロイ後に実URLで確認）
 - [x] GitHub Pagesで`?form=スラッグ`の回答フォームを動的表示する
 - [x] 公開GitHub PagesフォームからManusの公開APIへ回答を送信する（公開CORSはGitHub Pages originのみ許可）
 - [x] GitHub Pages回答フォームで必須チェックと送信完了表示を実装する
