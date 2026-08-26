@@ -57,6 +57,7 @@ export const integrations = mysqlTable("integrations", {
   id: int("id").autoincrement().primaryKey(),
   formId: int("formId").notNull().unique(),
   channelName: varchar("channelName", { length: 200 }).notNull(),
+  notificationCode: varchar("notificationCode", { length: 64 }).notNull().default(""),
   endpointUrl: varchar("endpointUrl", { length: 500 }).notNull(),
   enabled: int("enabled").default(0).notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),

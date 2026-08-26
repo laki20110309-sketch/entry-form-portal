@@ -9,6 +9,7 @@ sudo useradd --system --home /opt/entry-atelier --shell /usr/sbin/nologin entrya
 sudo mkdir -p "$APP_DIR/data" "$ENV_DIR"
 sudo cp -R ./* "$APP_DIR/"
 sudo chown -R entryatelier:entryatelier /opt/entry-atelier
+sudo chmod 700 "$APP_DIR/data"
 sudo -u entryatelier npm --prefix "$APP_DIR" install --omit=dev
 sudo install -o root -g root -m 0644 "$APP_DIR/systemd/entry-atelier-bot.service" /etc/systemd/system/entry-atelier-bot.service
 if [ ! -f "$ENV_DIR/bot.env" ]; then

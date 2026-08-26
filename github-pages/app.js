@@ -1,26 +1,54 @@
-const API_ENDPOINT = window.ENTRY_API_ENDPOINT || ''; // 公開ページには秘密鍵を置かず、VPSのHTTPS API URLだけ設定
-const seed = {id:1,title:'エントリーフォーム',slug:'entry',description:'必要事項をご入力ください。',status:'open',successMessage:'回答を受け付けました。ありがとうございました。',questions:[{id:1,label:'お名前',description:'',type:'short_text',required:true,options:[]},{id:2,label:'メールアドレス',description:'ご連絡可能なアドレスをご入力ください。',type:'email',required:true,options:[]},{id:3,label:'お問い合わせ内容',description:'',type:'long_text',required:true,options:[]}]};
-seed.notificationCode='TEAM-A';
-let state=JSON.parse(localStorage.getItem('entry-atelier-state')||'null')||{forms:[seed],selected:1,responses:[]};
-const params=new URLSearchParams(location.search);
-const sharedSlug=params.get('form');
-const sharePayload=params.get('share');
-const isSharedView=Boolean(sharedSlug||sharePayload);
-let sharedFormFromUrl=null;
-if(sharePayload){try{const bytes=Uint8Array.from(atob(sharePayload.replace(/-/g,'+').replace(/_/g,'/')),char=>char.charCodeAt(0));sharedFormFromUrl=JSON.parse(new TextDecoder().decode(bytes));}catch{sharedFormFromUrl=null;}}
-if(sharedFormFromUrl){const existingIndex=state.forms.findIndex(form=>form.slug===sharedFormFromUrl.slug);if(existingIndex>=0)state.forms[existingIndex]=sharedFormFromUrl;else state.forms=[sharedFormFromUrl,...state.forms];state.selected=sharedFormFromUrl.id;persist();}
-else if(sharedSlug){const sharedForm=state.forms.find(form=>form.slug===sharedSlug);if(sharedForm)state.selected=sharedForm.id;}
-const ADMIN_PASSWORD='0309';
-let loggedIn=sessionStorage.getItem('entry-atelier-admin')==='1';
-const $=s=>document.querySelector(s), esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-function persist(){localStorage.setItem('entry-atelier-state',JSON.stringify(state));}
-function toast(t){const el=$('#toast');el.textContent=t;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2200)}
-function current(){return state.forms.find(f=>f.id===state.selected)||state.forms[0]}
-function renderPublic(){const f=current();const root=$('#form-root');if(!f||f.status!=='open'){root.innerHTML='<div class="empty">このフォームは現在受付していません。</div>';return}root.innerHTML=`<h2>${esc(f.title)}</h2><p class="intro">${esc(f.description)}</p><form id="public-form">${f.questions.map((q,i)=>`<div class="question"><label>${String(i+1).padStart(2,'0')}　${esc(q.label)}${q.required?'<span class="required">*</span>':''}</label>${q.description?`<small>${esc(q.description)}</small>`:''}${control(q)}</div>`).join('')}<button class="primary" type="submit">回答を送信する　→</button><p class="muted" style="font-size:12px;text-align:center;margin-top:15px">送信内容は安全に処理されます。</p></form>`;$('#public-form').onsubmit=submitPublic}
-function control(q){const name=`q-${q.id}`;if(q.type==='long_text')return `<textarea name="${name}" ${q.required?'required':''}></textarea>`;if(q.type==='email')return `<input type="email" name="${name}" ${q.required?'required':''}>`;if(q.type==='single_choice')return q.options.map(o=>`<label class="choice"><input type="radio" name="${name}" value="${esc(o)}" ${q.required?'required':''}>${esc(o)}</label>`).join('');if(q.type==='multiple_choice')return q.options.map(o=>`<label class="choice"><input type="checkbox" name="${name}" value="${esc(o)}">${esc(o)}</label>`).join('');return `<input name="${name}" ${q.required?'required':''}>`}
-async function submitPublic(e){e.preventDefault();const f=current(), data={};f.questions.forEach(q=>{const els=[...e.target.querySelectorAll(`[name="q-${q.id}"]`)];data[q.id]=q.type==='multiple_choice'?els.filter(x=>x.checked).map(x=>x.value):els.find(x=>x.checked)?.value||els[0]?.value||''});const submission={id:Date.now(),formId:f.id,submittedAt:new Date().toISOString(),status:'received',answers:data};try{if(API_ENDPOINT){const r=await fetch(API_ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:f.notificationCode||'',formTitle:f.title,answers:Object.fromEntries(f.questions.map(q=>[q.label,data[q.id]])),submittedAt:submission.submittedAt,form:f,submission})});if(!r.ok)throw new Error('送信に失敗しました')}state.responses.unshift({...submission,status:'sent'});persist();e.target.innerHTML=`<div class="empty" style="text-align:center;padding:40px 0"><strong style="font-family:'Playfair Display',serif;font-size:25px;display:block;margin-bottom:10px">ありがとうございます。</strong>${esc(f.successMessage)}</div>`}catch(err){toast('送信に失敗しました。設定を確認してください。')}}
-function renderAdmin(){const f=current();$('#form-list').innerHTML=state.forms.map(x=>`<button class="list-item ${x.id===state.selected?'selected':''}" data-id="${x.id}">${esc(x.title)}<small>/${esc(x.slug)} · ${x.status==='open'?'受付中':x.status==='closed'?'終了':'下書き'}</small></button>`).join('');document.querySelectorAll('.list-item').forEach(b=>b.onclick=()=>{state.selected=Number(b.dataset.id);persist();renderAll()});$('#title').value=f.title;$('#slug').value=f.slug;$('#description').value=f.description||'';$('#status').value=f.status;$('#successMessage').value=f.successMessage||'';$('#notificationCode').value=f.notificationCode||'';$('#questions').innerHTML=f.questions.map((q,i)=>`<div class="question-card"><div class="row"><input data-q="${i}" data-key="label" value="${esc(q.label)}" placeholder="質問文"><select data-q="${i}" data-key="type">${[['short_text','短文'],['long_text','長文'],['email','メール'],['single_choice','単一選択'],['multiple_choice','複数選択']].map(([v,l])=>`<option value="${v}" ${q.type===v?'selected':''}>${l}</option>`).join('')}</select></div><input data-q="${i}" data-key="description" value="${esc(q.description||'')}" placeholder="補足説明（任意）">${['single_choice','multiple_choice'].includes(q.type)?`<input data-q="${i}" data-key="options" value="${esc(q.options.join(', '))}" placeholder="選択肢をカンマ区切りで入力">`:''}<div class="actions"><label><input type="checkbox" data-q="${i}" data-key="required" ${q.required?'checked':''}> 必須回答</label><span><button data-move="up" data-q="${i}" ${i===0?'disabled':''}>↑</button><button data-move="down" data-q="${i}" ${i===f.questions.length-1?'disabled':''}>↓</button><button class="danger" data-remove="${i}">削除</button></span></div></div>`).join('')||'<div class="empty">質問を追加してください。</div>';document.querySelectorAll('[data-q]').forEach(el=>el.onchange=()=>{const q=f.questions[Number(el.dataset.q)],k=el.dataset.key;q[k]=k==='required'?el.checked:k==='options'?el.value.split(',').map(x=>x.trim()).filter(Boolean):el.value;persist();renderPublic()});document.querySelectorAll('[data-remove]').forEach(b=>b.onclick=()=>{f.questions.splice(Number(b.dataset.remove),1);persist();renderAll()});document.querySelectorAll('[data-move]').forEach(b=>b.onclick=()=>{const i=Number(b.dataset.q),j=i+(b.dataset.move==='up'?-1:1);[f.questions[i],f.questions[j]]=[f.questions[j],f.questions[i]];persist();renderAll()});$('#responses').innerHTML=state.responses.filter(r=>r.formId===f.id).map(r=>`<div class="response"><span>回答 #${r.id}<br>${new Date(r.submittedAt).toLocaleString('ja-JP')}</span><span class="badge">受信済み</span></div>`).join('')||'<div class="empty">回答はまだありません。</div>'}
-function renderAll(){renderPublic();if(loggedIn&&!isSharedView)renderAdmin()}
-$('#save-form').onclick=()=>{const f=current();f.title=$('#title').value;f.slug=$('#slug').value;f.description=$('#description').value;f.status=$('#status').value;f.successMessage=$('#successMessage').value;f.notificationCode=$('#notificationCode').value.trim();persist();renderAll();toast('設定を保存しました')};$('#new-form').onclick=()=>{const id=Date.now();state.forms.push({id,title:'新しいフォーム',slug:'form-'+String(id).slice(-6),description:'',status:'draft',successMessage:'回答を受け付けました。ありがとうございました。',notificationCode:'',questions:[]});state.selected=id;persist();renderAll();toast('新しいフォームを作成しました')};$('#add-question').onclick=()=>{current().questions.push({id:Date.now(),label:'',description:'',type:'short_text',required:false,options:[]});persist();renderAll()};function updateLogin(){const btn=$('#login-btn');btn.textContent=loggedIn?'ログアウト':'ログイン';btn.classList.toggle('logged-in',loggedIn)}
-function requireLogin(){if(loggedIn)return true;const pass=window.prompt('管理画面のパスワードを入力してください');if(pass===ADMIN_PASSWORD){loggedIn=true;sessionStorage.setItem('entry-atelier-admin','1');window.location.reload();return true}toast('パスワードが違います');return false}
-$('#share-form').onclick=async()=>{const f=current();const shareable={id:f.id,title:f.title,slug:f.slug,description:f.description,status:f.status,successMessage:f.successMessage,notificationCode:f.notificationCode||'',questions:f.questions};const encoded=btoa(String.fromCharCode(...new TextEncoder().encode(JSON.stringify(shareable)))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');const url=new URL(location.href);url.searchParams.delete('form');url.searchParams.set('share',encoded);url.hash='public';try{await navigator.clipboard.writeText(url.toString());toast('共有リンクをコピーしました')}catch{window.prompt('共有リンクをコピーしてください',url.toString())}};$('#login-btn').onclick=()=>{if(loggedIn){loggedIn=false;sessionStorage.removeItem('entry-atelier-admin');window.location.reload()}else requireLogin()};document.querySelectorAll('.nav-btn[data-view]').forEach(b=>b.onclick=()=>{if(b.dataset.view==='admin'&&!requireLogin())return;document.querySelectorAll('.nav-btn').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.querySelectorAll('.view').forEach(x=>x.classList.toggle('active',x.id===b.dataset.view));if(b.dataset.view==='public')renderPublic();else renderAdmin()});updateLogin();if(isSharedView){document.querySelector('.admin-nav')?.remove();document.querySelector('#login-btn')?.remove();document.querySelector('#admin')?.remove()}renderAll();
+const API_ENDPOINT = window.ENTRY_API_ENDPOINT || '';
+const seed = { id: 1, title: 'エントリーフォーム', slug: 'entry', description: '必要事項をご入力ください。', status: 'open', successMessage: '回答を受け付けました。ありがとうございました。', notificationCode: 'TEAM-A', questions: [
+  { id: 1, label: 'お名前', description: '', type: 'short_text', required: true, options: [] },
+  { id: 2, label: 'メールアドレス', description: 'ご連絡可能なアドレスをご入力ください。', type: 'email', required: true, options: [] },
+  { id: 3, label: 'お問い合わせ内容', description: '', type: 'long_text', required: true, options: [] }
+] };
+const params = new URLSearchParams(location.search);
+let form = null;
+const encoded = params.get('share');
+if (encoded) {
+  try {
+    const normalized = encoded.replace(/-/g, '+').replace(/_/g, '/');
+    const bytes = Uint8Array.from(atob(normalized), char => char.charCodeAt(0));
+    form = JSON.parse(new TextDecoder().decode(bytes));
+  } catch { form = null; }
+}
+if (!form) {
+  const saved = JSON.parse(localStorage.getItem('entry-atelier-public-form') || 'null');
+  form = saved || seed;
+}
+const $ = selector => document.querySelector(selector);
+const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
+function renderPublic() {
+  const root = $('#form-root');
+  if (!root) return;
+  if (!form || form.status !== 'open') { root.innerHTML = '<div class="empty">このフォームは現在受付していません。</div>'; return; }
+  root.innerHTML = `<h2>${esc(form.title)}</h2><p class="intro">${esc(form.description)}</p><form id="public-form">${(form.questions || []).map((question, index) => `<div class="question"><label>${String(index + 1).padStart(2, '0')}　${esc(question.label)}${question.required ? '<span class="required">*</span>' : ''}</label>${question.description ? `<small>${esc(question.description)}</small>` : ''}${control(question)}</div>`).join('')}<button class="primary" type="submit">回答を送信する　→</button><p class="muted" style="font-size:12px;text-align:center;margin-top:15px">送信内容は安全に処理されます。</p></form>`;
+  $('#public-form').addEventListener('submit', submitPublic);
+}
+function control(question) {
+  const name = `q-${question.id}`;
+  if (question.type === 'long_text') return `<textarea name="${name}" ${question.required ? 'required' : ''}></textarea>`;
+  if (question.type === 'email') return `<input type="email" name="${name}" ${question.required ? 'required' : ''}>`;
+  if (question.type === 'single_choice') return (question.options || []).map(option => `<label class="choice"><input type="radio" name="${name}" value="${esc(option)}" ${question.required ? 'required' : ''}>${esc(option)}</label>`).join('');
+  if (question.type === 'multiple_choice') return (question.options || []).map(option => `<label class="choice"><input type="checkbox" name="${name}" value="${esc(option)}">${esc(option)}</label>`).join('');
+  return `<input name="${name}" ${question.required ? 'required' : ''}>`;
+}
+async function submitPublic(event) {
+  event.preventDefault();
+  const data = {};
+  (form.questions || []).forEach(question => {
+    const elements = [...event.target.querySelectorAll(`[name="q-${question.id}"]`)];
+    data[question.id] = question.type === 'multiple_choice' ? elements.filter(element => element.checked).map(element => element.value) : elements.find(element => element.checked)?.value || elements[0]?.value || '';
+  });
+  const submittedAt = new Date().toISOString();
+  try {
+    if (API_ENDPOINT) {
+      const response = await fetch(API_ENDPOINT, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code: form.notificationCode || '', formTitle: form.title, answers: Object.fromEntries((form.questions || []).map(question => [question.label, data[question.id]])), submittedAt }) });
+      if (!response.ok) throw new Error('notification_failed');
+    }
+    event.target.innerHTML = `<div class="empty" style="text-align:center;padding:40px 0"><strong style="font-family:'Playfair Display',serif;font-size:25px;display:block;margin-bottom:10px">ありがとうございます。</strong>${esc(form.successMessage || '回答を受け付けました。')}</div>`;
+  } catch { const toast = $('#toast'); if (toast) { toast.textContent = '送信に失敗しました。時間をおいて再度お試しください。'; toast.classList.add('show'); setTimeout(() => toast.classList.remove('show'), 2600); } }
+}
+renderPublic();

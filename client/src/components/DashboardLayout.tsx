@@ -28,9 +28,9 @@ import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
 
 const menuItems = [
-  { icon: LayoutDashboard, label: "フォーム管理", path: "/admin" },
-  { icon: Users, label: "回答履歴", path: "/admin?tab=responses" },
-  { icon: Webhook, label: "ボット連携", path: "/admin?tab=integration" },
+  { icon: LayoutDashboard, label: "フォーム管理", path: "/manage" },
+  { icon: Users, label: "回答履歴", path: "/manage?tab=responses" },
+  { icon: Webhook, label: "ボット連携", path: "/manage?tab=integration" },
 ];
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";

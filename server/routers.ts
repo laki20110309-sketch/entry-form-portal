@@ -7,6 +7,7 @@ import { adminProcedure, publicProcedure, router } from "./_core/trpc";
 import { answers, forms, integrations, questions, submissions } from "../drizzle/schema";
 import { getDb, getFormById, getFormBySlug, getIntegration, getQuestions, getSubmission, insertSubmission, listForms, listSubmissions, updateSubmissionStatus } from "./db";
 import { and, eq } from "drizzle-orm";
+import { ENV } from "./_core/env";
 
 const questionType = z.enum(["short_text", "long_text", "email", "single_choice", "multiple_choice"]);
 const questionInput = z.object({ id: z.number().optional(), label: z.string().min(1).max(300), description: z.string().max(2000).optional(), type: questionType, options: z.array(z.string().min(1).max(200)).max(30).default([]), required: z.boolean().default(false), position: z.number().int().min(0) });
@@ -23,7 +24,11 @@ function enforceSubmissionGuard(req: { headers: Record<string, unknown> }) {
 async function notifyBot(formId: number, payload: unknown) {
   const integration = await getIntegration(formId);
   if (!integration || !integration.enabled) return { sent: false };
-  const response = await fetch(integration.endpointUrl, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ channel: integration.channelName, formId, payload }), signal: AbortSignal.timeout(8000) });
+  const endpoint = ENV.vpsBotApiUrl || integration.endpointUrl;
+  if (!endpoint) throw new Error("Bot endpoint is not configured");
+  const headers: Record<string, string> = { "content-type": "application/json" };
+  if (ENV.vpsBotApiSecret) headers.authorization = `Bearer ${ENV.vpsBotApiSecret}`;
+  const response = await fetch(endpoint, { method: "POST", headers, body: JSON.stringify({ code: integration.notificationCode, formTitle: (payload as { formTitle?: string }).formTitle ?? "応募フォーム", answers: (payload as { answers?: unknown }).answers ?? {}, submittedAt: new Date().toISOString(), channel: integration.channelName, formId }), signal: AbortSignal.timeout(8000) });
   if (!response.ok) throw new Error(`Bot endpoint returned ${response.status}`);
   return { sent: true };
 }
@@ -68,7 +73,7 @@ export const appRouter = router({
     cloneForm: adminProcedure.input(z.object({ id: z.number() })).mutation(async ({ input, ctx }) => { const db = await getDb(); const source = await getFormById(input.id); if (!db || !source) throw new TRPCError({ code: "NOT_FOUND" }); const slug = `${source.slug}-copy-${Date.now().toString().slice(-5)}`; const created = await db.insert(forms).values({ title: `${source.title}（複製）`, slug, description: source.description, status: "draft", successMessage: source.successMessage, createdBy: ctx.user.id }); const formId = Number(created[0].insertId); const qs = await getQuestions(input.id); if (qs.length) await db.insert(questions).values(qs.map(q => ({ formId, label: q.label, description: q.description, type: q.type, options: q.options, required: q.required, position: q.position }))); return { id: formId }; }),
     submissions: adminProcedure.input(z.object({ formId: z.number().optional() }).optional()).query(({ input }) => listSubmissions(input?.formId)),
     submission: adminProcedure.input(z.object({ id: z.number() })).query(({ input }) => getSubmission(input.id)),
-    saveIntegration: adminProcedure.input(z.object({ formId: z.number(), channelName: z.string().min(1).max(200), endpointUrl: z.string().url().max(500), enabled: z.boolean() })).mutation(async ({ input }) => { const db = await getDb(); if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" }); const current = await getIntegration(input.formId); const values = { formId: input.formId, channelName: input.channelName, endpointUrl: input.endpointUrl, enabled: input.enabled ? 1 : 0 }; if (current) await db.update(integrations).set(values).where(eq(integrations.formId, input.formId)); else await db.insert(integrations).values(values); return { success: true }; }),
+    saveIntegration: adminProcedure.input(z.object({ formId: z.number(), channelName: z.string().min(1).max(200), notificationCode: z.string().regex(/^[A-Za-z0-9_-]{3,32}$/), endpointUrl: z.string().url().max(500).optional(), enabled: z.boolean() })).mutation(async ({ input }) => { const db = await getDb(); if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" }); const current = await getIntegration(input.formId); const values = { formId: input.formId, channelName: input.channelName, notificationCode: input.notificationCode, endpointUrl: input.endpointUrl ?? ENV.vpsBotApiUrl, enabled: input.enabled ? 1 : 0 }; if (!values.endpointUrl) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "サーバー側のBot API設定が未完了です。" }); if (current) await db.update(integrations).set(values).where(eq(integrations.formId, input.formId)); else await db.insert(integrations).values(values); return { success: true }; }),
   }),
 });
 

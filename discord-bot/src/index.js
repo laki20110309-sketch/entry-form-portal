@@ -34,7 +34,8 @@ app.use(rateLimit({ windowMs: 60_000, limit: 60, standardHeaders: true, legacyHe
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
 const codeSchema = z.string().regex(/^[A-Za-z0-9_-]{3,32}$/);
-const notificationSchema = z.object({ code: codeSchema, formTitle: z.string().min(1).max(200), answers: z.record(z.string(), z.union([z.string(), z.array(z.string())])).default({}), submittedAt: z.string().max(80).optional() });
+const answerValueSchema = z.union([z.string().max(2000), z.array(z.string().max(500)).max(20)]);
+const notificationSchema = z.object({ code: codeSchema, formTitle: z.string().min(1).max(200), answers: z.record(z.string().min(1).max(300), answerValueSchema).refine(value => Object.keys(value).length <= 50, 'too_many_answers').default({}), submittedAt: z.string().max(80).optional() }).strict();
 let channelCodes = {};
 let submissions = [];
 

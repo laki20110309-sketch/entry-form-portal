@@ -1,0 +1,1 @@
+ALTER TABLE `integrations` ADD `notificationCode` varchar(64) DEFAULT '' NOT NULL;

@@ -14,8 +14,9 @@ Bot招待URLは、OAuth2 URL GeneratorでScopesに`bot`を選択し、上記の�
 sudo apt update
 sudo apt install -y nodejs npm
 sudo useradd --system --home /opt/entry-atelier --shell /usr/sbin/nologin entryatelier || true
-sudo mkdir -p /opt/entry-atelier /etc/entry-atelier
+sudo mkdir -p /opt/entry-atelier/discord-bot/data /etc/entry-atelier
 sudo chown -R entryatelier:entryatelier /opt/entry-atelier
+sudo chmod 700 /opt/entry-atelier/discord-bot/data
 # このdiscord-botフォルダを /opt/entry-atelier/discord-bot に配置
 cd /opt/entry-atelier/discord-bot
 sudo -u entryatelier npm install --omit=dev
@@ -38,10 +39,11 @@ DATA_DIR=/opt/entry-atelier/discord-bot/data
 sudo systemctl daemon-reload
 sudo systemctl enable --now entry-atelier-bot
 sudo systemctl status entry-atelier-bot
+sudo stat -c '%A %U:%G %n' /opt/entry-atelier/discord-bot/data
 curl http://127.0.0.1:8787/health
 ```
 
-本番ではAPIポート`8787`を直接公開せず、同梱の`nginx/entry-atelier.conf`をNginxへ配置し、ドメインを設定してHTTPS化してください。`certbot`等で証明書を発行した後、フォーム側の`config.js`には`https://あなたのドメイン/public-notify`を設定します。ファイアウォールはSSH・HTTP・HTTPSだけを許可し、APIポートは閉じます。
+本番ではAPIポート`8787`を直接公開せず、同梱の`nginx/entry-atelier.conf`をNginxへ配置し、ドメインを設定してHTTPS化してください。`certbot`等で証明書を発行した後、VPS APIを直接利用する構成でのみクライアント側の接続先を更新します。本番のManus DB版ではManusサーバー側の環境変数からVPSへ接続し、公開ブラウザへURLや秘密情報を配布しません。ファイアウォールはSSH・HTTP・HTTPSだけを許可し、APIポートは閉じます。
 
 ```bash
 sudo apt install -y nginx certbot python3-certbot-nginx ufw
@@ -71,7 +73,7 @@ sudo systemctl enable --now entry-atelier-tunnel
 sudo journalctl -u entry-atelier-tunnel -f
 ```
 
-表示されたURLを`config.js`の`window.ENTRY_API_ENDPOINT`に設定し、GitHubへpushします。大会後も継続利用する場合は、固定ドメインまたはCloudflare Tunnelの名前付きトンネルへ切り替えてください。
+表示されたURLは一時的で再起動後に変わる可能性があります。Manus DB版を本番の正本として使う場合、公開フォームからの通知はManusサーバー側で行い、GitHub Pagesの`config.js`へVPS URLや秘密情報を設定しません。大会後もVPS APIを直接使う場合は、固定ドメインまたはCloudflare Tunnelの名前付きトンネルへ切り替えてください。
 
 ## 識別コードの例
 
