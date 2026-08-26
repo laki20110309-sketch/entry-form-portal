@@ -46,6 +46,7 @@ async function saveCodes() { await saveJson(codesFile, channelCodes); }
 async function saveSubmissions() { await saveJson(submissionsFile, submissions.slice(0, 500)); }
 function safeEqual(a, b) { const left = Buffer.from(a); const right = Buffer.from(b); return left.length === right.length && crypto.timingSafeEqual(left, right); }
 function authorized(req) { const value = String(req.headers.authorization || ''); return value.startsWith('Bearer ') && safeEqual(value.slice(7), apiSecret); }
+function normalizeCode(value) { return String(value || '').trim().toUpperCase(); }
 function formatAnswer(value) { return Array.isArray(value) ? value.join(', ') : value || '未回答'; }
 function chunks(text, size = 1800) { const result = []; for (let i = 0; i < text.length; i += size) result.push(text.slice(i, i + size)); return result; }
 function formatNotification(submission) {
@@ -53,7 +54,7 @@ function formatNotification(submission) {
   return [`## 新しい応募`, `**フォーム:** ${submission.formTitle}`, `**受付日時:** ${submission.submittedAt || new Date().toISOString()}`, `**受付ID:** ${submission.id}`, '', ...lines].join('\n');
 }
 async function deliver(submission) {
-  const channelId = channelCodes[submission.code];
+  const channelId = channelCodes[normalizeCode(submission.code)];
   if (!channelId) throw new Error('unknown_code');
   const channel = await client.channels.fetch(channelId);
   if (!channel?.isTextBased()) throw new Error('target_channel_not_text');
@@ -61,8 +62,8 @@ async function deliver(submission) {
 }
 
 app.get('/health', (_req, res) => res.json({ ok: true, botReady: client.isReady(), registeredCodes: Object.keys(channelCodes).length, pending: submissions.filter(item => item.status === 'failed').length }));
-app.post(['/notify', '/public-notify'], async (req, res) => {
-  if (req.path === '/notify' && !authorized(req)) return res.status(401).json({ error: 'unauthorized' });
+app.post('/notify', async (req, res) => {
+  if (!authorized(req)) return res.status(401).json({ error: 'unauthorized' });
   const parsed = notificationSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: 'invalid_payload' });
   const submission = { id: crypto.randomUUID(), ...parsed.data, submittedAt: parsed.data.submittedAt || new Date().toISOString(), status: 'pending', attempts: 0, createdAt: new Date().toISOString() };
@@ -109,8 +110,8 @@ client.on('messageCreate', async message => {
   const unset = message.content.trim().match(/^!unset-([A-Za-z0-9_-]{3,32})$/);
   if (!match && !unset) return;
   if (!message.member?.permissions.has(PermissionFlagsBits.ManageChannels)) return message.reply('この操作にはチャンネル管理権限が必要です。');
-  const code = (match || unset)[1];
-  if (match) { channelCodes[code] = message.channel.id; await saveCodes(); return message.reply(`識別コード「${code}」をこのチャンネルに設定しました。`); }
+  const code = normalizeCode((match || unset)[1]);
+  if (match) { channelCodes[code] = message.channel.id; await saveCodes(); return message.reply(`識別コード「${code}」をこのチャンネルに設定しました。ここへ応募通知を送信します。`); }
   delete channelCodes[code]; await saveCodes(); return message.reply(`識別コード「${code}」を解除しました。`);
 });
 
