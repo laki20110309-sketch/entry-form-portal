@@ -16,7 +16,7 @@ if [ ! -f "$ENV_DIR/bot.env" ]; then
 DISCORD_BOT_TOKEN=
 FORM_API_SECRET=
 PORT=8787
-DATA_FILE=/opt/entry-atelier/discord-bot/data/channel-codes.json
+DATA_DIR=/opt/entry-atelier/discord-bot/data
 EOF
   sudo chmod 600 "$ENV_DIR/bot.env"
   echo "Edit $ENV_DIR/bot.env, then run: sudo systemctl enable --now entry-atelier-bot"
