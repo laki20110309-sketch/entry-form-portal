@@ -4,7 +4,7 @@
 
 ## GitHub Pagesへの公開
 
-GitHubリポジトリを作成し、このフォルダ内の3ファイルをリポジトリ直下へアップロードしてください。その後、GitHubの **Settings → Pages → Deploy from a branch** を選択し、公開ブランチのルートを指定します。数分後に発行されたURLからサイトを確認できます。
+GitHubリポジトリを作成し、このフォルダ内の4ファイル（`index.html`、`styles.css`、`config.js`、`app.js`）をリポジトリ直下へアップロードしてください。その後、GitHubの **Settings → Pages → Deploy from a branch** を選択し、公開ブランチのルートを指定します。数分後に発行されたURLからサイトを確認できます。
 
 ## 管理画面ログインについて
 
@@ -18,7 +18,7 @@ GitHub PagesはHTML・CSS・JavaScriptを配信する静的ホスティングな
 
 > ボットのトークンや署名鍵を`app.js`へ直接書かないでください。GitHub Pages上のJavaScriptは閲覧者へ公開されるため、秘密情報が漏洩します。
 
-今回のファイル版には、既存エントリーボットの実際の認証方式・エンドポイント仕様をまだ埋め込んでいません。ボットの仕様ファイルを受け取った後、サーバー側の送信アダプターと、必要な環境変数名を確定できます。現在の`API_ENDPOINT`は、回答を受け取る安全な中継APIを想定しています。
+今回の更新版には、新規応募通知Bot用のVPSプロジェクトを`discord-bot/`として同梱しています。`config.js`の`window.ENTRY_API_ENDPOINT`にVPSのHTTPS公開URLと`/public-notify`を設定すると、応募送信後に通知APIへ接続できます。フォームごとの共有ボタンはフォーム定義を含む`?share=...`形式のURLをコピーします。共有URLは別ブラウザでもフォームを表示でき、管理画面と管理データを表示しません。
 
 ## 既存の管理画面版について
 
