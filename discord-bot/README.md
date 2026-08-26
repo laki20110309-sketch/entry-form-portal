@@ -60,7 +60,11 @@ Bot Tokenと`FORM_API_SECRET`をGitHubへコミットしてはいけません。
 独自ドメインを用意しない大会期間中は、Cloudflare Quick Tunnelを使えます。これは一時URLなので、VPSを再起動するとURLが変わる可能性があります。起動後に表示される`https://xxxxx.trycloudflare.com`へ`/public-notify`を付けたURLを、GitHub Pagesの`config.js`へ設定してください。
 
 ```bash
-sudo snap install cloudflared
+sudo mkdir -p /usr/share/keyrings
+curl -fsSL https://pkg.cloudflare.com/cloudflare-main.gpg | sudo tee /usr/share/keyrings/cloudflare-main.gpg >/dev/null
+echo 'deb [signed-by=/usr/share/keyrings/cloudflare-main.gpg] https://pkg.cloudflare.com/cloudflared any main' | sudo tee /etc/apt/sources.list.d/cloudflared.list
+sudo apt update
+sudo apt install -y cloudflared
 sudo install -o root -g root -m 0644 /opt/entry-atelier/discord-bot/systemd/entry-atelier-tunnel.service /etc/systemd/system/entry-atelier-tunnel.service
 sudo systemctl daemon-reload
 sudo systemctl enable --now entry-atelier-tunnel
