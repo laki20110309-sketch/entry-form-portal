@@ -126,13 +126,13 @@
 - [x] TEAM-Aの登録・テスト通知・失敗表示を確認する（コード・Bot構文・型・Vitest確認済み。実Discord到達は運用環境でボタン実行）
 - [x] Discord通知不達の原因をBot登録・管理画面設定・VPS接続・権限の順に診断する（Manus回答形式とBot record形式の不一致を特定・修正）
 - [x] 実際のBot環境変数名とManus環境変数名の一致を確認する（VPSは`FORM_API_SECRET`、Manusは`VPS_BOT_API_SECRET`として同一値を使用）
-- [ ] `!set-TEAM-A`登録チャンネルへのテスト通知と失敗時ログを確認する（400修正済み。管理画面テスト通知の実行待ち）
+- [x] `!set-TEAM-A`登録チャンネルへのテスト通知と失敗時ログを確認する（ユーザー確認：対象チャンネルへ埋め込み通知が到達）
 - [x] Discord OAuthログインを管理画面のBot連携に追加する（OAuthルート・暗号化セッション・CSRF state・Discord資格情報検証済み）（不要。OAuthなしでVPS Bot接続を利用）
 - [x] OAuthユーザーが管理権限を持つBot参加サーバーだけを一覧表示する（Discord guilds権限とVPS Bot参加Guildの交差で実装）（不要。Manus管理者認証＋Bot参加サーバー一覧方式へ変更）
 - [x] 選択サーバーのテキストチャンネルをプルダウン表示する
 - [x] チャンネル選択を`!set-識別コード`登録と整合させる（保存時に/registerへ登録）（保存時にBotの/registerへ自動登録）
 - [x] Discord通知を埋め込み形式へ変更し、回答内容を読みやすく表示する
-- [ ] OAuthログイン後にサーバー一覧が表示され、チャンネル選択→TEAM-A保存→埋め込みテスト通知まで実機確認する（公開版反映済み。ユーザーのDiscordログイン操作待ち）
+- [x] OAuthログイン後にサーバー一覧が表示され、チャンネル選択→TEAM-A保存→埋め込みテスト通知まで実機確認する（ユーザー確認済み）
 - [x] OAuth用APP ID・Secretを使わず、VPS Bot接続を正本にしてサーバー一覧を取得する（OAuth方式へ切り替え。Bot接続は通知登録の正本）
 - [x] Bot参加サーバーとBotが書き込めるテキストチャンネルだけを認証付きで返す
 - [x] 管理画面のサーバー選択・チャンネル選択を追加し、既存の`!set-TEAM-A`と整合させる
@@ -147,7 +147,7 @@
 - [x] Quick Tunnelの現在URLとVPS Bot APIの`/guilds`応答を確認する（認証付き`/guilds`テスト合格）
 - [x] チャットへ貼られた旧FORM_API_SECRETを無効化し、新しい値へローテーションする
 - [x] VPSとManus Secretsへ新しい共有シークレットを設定する（秘密値はチャットに貼らない）
-- [ ] ローテーション後に`/guilds`認証付き疎通とTEAM-Aテスト通知を確認する（認証付きguilds自動テスト合格、実Discord通知待ち）
+- [x] ローテーション後に`/guilds`認証付き疎通とTEAM-Aテスト通知を確認する（認証付き自動テスト合格、実Discord通知到達をユーザー確認）
 - [x] Bot endpoint returned 400の発生条件を特定して修正する（strict schemaに対する余分なchannel・formId送信を削除）
 - [x] サーバー選択とチャンネル選択を白背景・濃色文字で見やすくする
 - [x] 400エラー解消と選択UIを型・テスト・画面で確認する（tsc・Vitest 5件・production build通過）
